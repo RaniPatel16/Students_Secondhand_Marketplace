@@ -1,5 +1,7 @@
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 export const metadata = {
   title: "CampusMart | Student Second-Hand Marketplace",
@@ -28,7 +30,9 @@ export default function RootLayout({ children }) {
             },
           }}
         />
+        <Navbar />
         <main className="flex-1">{children}</main>
+        <Footer />
       </body>
     </html>
   );
