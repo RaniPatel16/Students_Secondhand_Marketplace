@@ -14,11 +14,13 @@ import {
   ArrowLeft,
   MessageCircle,
   Share2,
-  CheckCircle2,
+  Sparkles,
   AlertCircle,
+  ArrowRight,
 } from "lucide-react";
 import { formatPrice, formatDate } from "../../../lib/utils";
 import { ProductDetailSkeleton } from "../../../components/LoadingSkeleton";
+import ProductCard from "../../../components/ProductCard";
 import toast from "react-hot-toast";
 
 export default function ProductDetailPage() {
@@ -30,8 +32,9 @@ export default function ProductDetailPage() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [favLoading, setFavLoading] = useState(false);
+  const [similarProducts, setSimilarProducts] = useState([]);
 
-  // Fetch product data
+  // Fetch product data and similar items
   useEffect(() => {
     async function loadProduct() {
       try {
@@ -39,6 +42,15 @@ export default function ProductDetailPage() {
         const data = await res.json();
         if (data.success && data.product) {
           setProduct(data.product);
+
+          // Fetch similar products in the same category
+          if (data.product.category) {
+            const simRes = await fetch(`/api/products?category=${encodeURIComponent(data.product.category)}&limit=4`);
+            const simData = await simRes.json();
+            if (simData.success && Array.isArray(simData.products)) {
+              setSimilarProducts(simData.products.filter((p) => p._id !== id));
+            }
+          }
         } else {
           toast.error("Product not found");
         }
@@ -143,7 +155,7 @@ export default function ProductDetailPage() {
       : null;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
       {/* Back Button */}
       <div>
         <Link
@@ -252,11 +264,11 @@ export default function ProductDetailPage() {
           {/* Quick Action Buttons */}
           <div className="flex flex-wrap items-center gap-3">
             <a
-              href={`#contact-seller`}
+              href="#contact-seller"
               className="flex-1 min-w-[200px] py-3.5 px-6 rounded-2xl bg-brand-primary text-white text-sm font-semibold hover:bg-brand-primaryHover shadow-sm flex items-center justify-center gap-2 transition-all"
             >
               <MessageCircle className="w-4 h-4 text-brand-accent" />
-              <span>Contact Seller / Make Offer</span>
+              <span>Contact Seller / Enquiry</span>
             </a>
 
             <button
@@ -295,14 +307,14 @@ export default function ProductDetailPage() {
               </div>
               <div className="flex items-center gap-1 text-xs text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full font-medium border border-emerald-200">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Verified</span>
+                <span>Verified Student</span>
               </div>
             </div>
 
             <div className="space-y-2 text-xs text-brand-textMain">
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-brand-accent shrink-0" />
-                <span>Location: <strong>{product.location}</strong></span>
+                <span>Campus Location: <strong>{product.location}</strong></span>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-brand-accent shrink-0" />
@@ -310,16 +322,45 @@ export default function ProductDetailPage() {
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-brand-accent shrink-0" />
-                <span>Phone: <a href={`tel:${product.sellerPhone}`} className="text-brand-primary font-semibold">{product.sellerPhone}</a></span>
+                <span>Contact Phone: <a href={`tel:${product.sellerPhone}`} className="text-brand-primary font-semibold">{product.sellerPhone}</a></span>
               </div>
               <div className="flex items-center gap-2 text-brand-textMuted pt-1">
                 <Calendar className="w-4 h-4 text-brand-textMuted shrink-0" />
-                <span>Listed on: {formatDate(product.createdAt)}</span>
+                <span>Listed: {formatDate(product.createdAt)}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Similar Products Section */}
+      {similarProducts.length > 0 && (
+        <div className="pt-10 border-t border-brand-border space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold text-brand-primary">
+                Similar Campus Listings
+              </h2>
+              <p className="text-xs text-brand-textMuted mt-0.5">
+                More {product.category} available on campus
+              </p>
+            </div>
+            <Link
+              href={`/marketplace?category=${encodeURIComponent(product.category)}`}
+              className="text-xs font-semibold text-brand-accent hover:text-brand-accentHover flex items-center gap-1"
+            >
+              <span>View all in {product.category}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {similarProducts.map((p) => (
+              <ProductCard key={p._id} product={p} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
