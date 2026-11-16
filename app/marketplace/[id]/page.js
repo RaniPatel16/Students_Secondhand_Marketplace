@@ -21,6 +21,7 @@ import {
 import { formatPrice, formatDate } from "../../../lib/utils";
 import { ProductDetailSkeleton } from "../../../components/LoadingSkeleton";
 import ProductCard from "../../../components/ProductCard";
+import EnquiryModal from "../../../components/EnquiryModal";
 import toast from "react-hot-toast";
 
 export default function ProductDetailPage() {
@@ -33,6 +34,7 @@ export default function ProductDetailPage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favLoading, setFavLoading] = useState(false);
   const [similarProducts, setSimilarProducts] = useState([]);
+  const [enquiryModalOpen, setEnquiryModalOpen] = useState(false);
 
   // Fetch product data and similar items
   useEffect(() => {
@@ -263,13 +265,13 @@ export default function ProductDetailPage() {
 
           {/* Quick Action Buttons */}
           <div className="flex flex-wrap items-center gap-3">
-            <a
-              href="#contact-seller"
-              className="flex-1 min-w-[200px] py-3.5 px-6 rounded-2xl bg-brand-primary text-white text-sm font-semibold hover:bg-brand-primaryHover shadow-sm flex items-center justify-center gap-2 transition-all"
+            <button
+              onClick={() => setEnquiryModalOpen(true)}
+              className="flex-1 min-w-[200px] py-3.5 px-6 rounded-2xl bg-brand-primary text-white text-sm font-semibold hover:bg-brand-primaryHover shadow-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
             >
               <MessageCircle className="w-4 h-4 text-brand-accent" />
-              <span>Contact Seller / Enquiry</span>
-            </a>
+              <span>Contact Seller / Make Offer</span>
+            </button>
 
             <button
               onClick={handleToggleFavorite}
@@ -294,7 +296,7 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Seller Information Card */}
-          <div id="contact-seller" className="p-6 rounded-3xl bg-brand-surface border border-brand-border shadow-sm space-y-4">
+          <div className="p-6 rounded-3xl bg-brand-surface border border-brand-border shadow-sm space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-brand-border">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-brand-primary text-white flex items-center justify-center font-bold text-lg">
@@ -361,6 +363,13 @@ export default function ProductDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Enquiry Contact Modal */}
+      <EnquiryModal
+        isOpen={enquiryModalOpen}
+        onClose={() => setEnquiryModalOpen(false)}
+        product={product}
+      />
     </div>
   );
 }
