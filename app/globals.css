@@ -3,18 +3,18 @@
 @tailwind utilities;
 
 :root {
-  --color-primary: #4A1525;
-  --color-accent: #E0876A;
-  --color-canvas: #FAF7F5;
+  --color-primary: #0F3A2E;
+  --color-accent: #C5A059;
+  --color-canvas: #FBF9F5;
   --color-surface: #FFFFFF;
-  --color-border: #E8DFDC;
-  --color-text-main: #24181B;
-  --color-text-muted: #6E5D61;
+  --color-border: #E7E2D6;
+  --color-text-main: #13221C;
+  --color-text-muted: #617169;
 }
 
 body {
-  background-color: #FAF7F5;
-  color: #24181B;
+  background-color: #FBF9F5;
+  color: #13221C;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -26,14 +26,14 @@ body {
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #FAF7F5;
+  background: #FBF9F5;
 }
 ::-webkit-scrollbar-thumb {
-  background: #E8DFDC;
+  background: #E7E2D6;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #E0876A;
+  background: #C5A059;
 }
 
 /* Smooth transitions */

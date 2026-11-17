@@ -17,14 +17,14 @@ export default function RootLayout({ children }) {
           toastOptions={{
             duration: 3500,
             style: {
-              background: "#4A1525",
+              background: "#0F3A2E",
               color: "#FFFFFF",
               borderRadius: "10px",
               fontSize: "14px",
             },
             success: {
               iconTheme: {
-                primary: "#E0876A",
+                primary: "#C5A059",
                 secondary: "#FFFFFF",
               },
             },

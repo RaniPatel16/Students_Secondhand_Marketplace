@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -16,7 +16,11 @@ import {
   CheckCircle,
   Tag,
   Users,
+  Flame,
+  Clock,
 } from "lucide-react";
+import ProductCard from "../components/ProductCard";
+import { ProductGridSkeleton } from "../components/LoadingSkeleton";
 
 export const CATEGORIES = [
   {
@@ -59,6 +63,27 @@ export const CATEGORIES = [
 export default function HomePage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [recentProducts, setRecentProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadHomeProducts() {
+      try {
+        const res = await fetch("/api/products?limit=8");
+        const data = await res.json();
+        if (data.success && Array.isArray(data.products)) {
+          setFeaturedProducts(data.products.slice(0, 4));
+          setRecentProducts(data.products.slice(4, 8));
+        }
+      } catch (err) {
+        console.error("Error loading homepage products:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadHomeProducts();
+  }, []);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -132,6 +157,40 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Featured Products */}
+      {featuredProducts.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-end justify-between mb-8">
+            <div>
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-accent uppercase tracking-wider mb-1">
+                <Flame className="w-4 h-4 fill-brand-accent text-brand-accent" />
+                <span>Popular Picks</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-brand-primary">
+                Featured Campus Listings
+              </h2>
+            </div>
+            <Link
+              href="/marketplace"
+              className="text-xs sm:text-sm font-semibold text-brand-accent hover:text-brand-accentHover flex items-center gap-1 group"
+            >
+              <span>View all</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
+          {loading ? (
+            <ProductGridSkeleton count={4} />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {featuredProducts.map((p) => (
+                <ProductCard key={p._id} product={p} />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
       {/* Categories Grid */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-3">
@@ -183,6 +242,36 @@ export default function HomePage() {
           })}
         </div>
       </section>
+
+      {/* Recently Added Products */}
+      {recentProducts.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-end justify-between mb-8">
+            <div>
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-primary uppercase tracking-wider mb-1">
+                <Clock className="w-4 h-4 text-brand-accent" />
+                <span>Freshly Posted</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-brand-primary">
+                Recently Added by Students
+              </h2>
+            </div>
+            <Link
+              href="/marketplace?sort=newest"
+              className="text-xs sm:text-sm font-semibold text-brand-accent hover:text-brand-accentHover flex items-center gap-1 group"
+            >
+              <span>See more</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {recentProducts.map((p) => (
+              <ProductCard key={p._id} product={p} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Value Proposition Highlights */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
