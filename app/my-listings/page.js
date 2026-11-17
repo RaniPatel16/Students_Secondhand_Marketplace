@@ -7,7 +7,8 @@ import {
   PlusCircle,
   Edit,
   Trash2,
-  CheckCircle,
+  CheckCircle2,
+  XCircle,
   Clock,
   Eye,
   AlertCircle,
@@ -15,13 +16,19 @@ import {
   ToggleLeft,
   ToggleRight,
   ExternalLink,
+  MessageSquare,
+  Mail,
+  DollarSign,
 } from "lucide-react";
 import { formatPrice, formatDate } from "../../lib/utils";
 import toast from "react-hot-toast";
 
 export default function MyListingsPage() {
+  const [activeTab, setActiveTab] = useState("listings"); // 'listings' | 'enquiries'
   const [products, setProducts] = useState([]);
+  const [enquiries, setEnquiries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [enquiriesLoading, setEnquiriesLoading] = useState(false);
   const [currentEmail, setCurrentEmail] = useState("rani.patel@campus.edu");
   const [actionLoading, setActionLoading] = useState(null);
 
@@ -41,15 +48,33 @@ export default function MyListingsPage() {
     }
   };
 
+  // Fetch enquiries for seller's products
+  const loadMyEnquiries = async (email) => {
+    setEnquiriesLoading(true);
+    try {
+      const res = await fetch(`/api/enquiries?sellerEmail=${encodeURIComponent(email)}`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.enquiries)) {
+        setEnquiries(data.enquiries);
+      }
+    } catch (err) {
+      toast.error("Failed to load enquiries");
+    } finally {
+      setEnquiriesLoading(false);
+    }
+  };
+
   useEffect(() => {
     const saved = localStorage.getItem("campusmart_user_email") || "rani.patel@campus.edu";
     setCurrentEmail(saved);
     loadMyProducts(saved);
+    loadMyEnquiries(saved);
 
     const handleUserChanged = () => {
       const updated = localStorage.getItem("campusmart_user_email") || "rani.patel@campus.edu";
       setCurrentEmail(updated);
       loadMyProducts(updated);
+      loadMyEnquiries(updated);
     };
 
     window.addEventListener("campusmart_user_changed", handleUserChanged);
@@ -127,9 +152,31 @@ export default function MyListingsPage() {
     }
   };
 
+  // Update enquiry status (Accepted, Rejected)
+  const handleEnquiryStatus = async (enquiryId, status) => {
+    try {
+      const res = await fetch(`/api/enquiries/${enquiryId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setEnquiries((prev) =>
+          prev.map((item) => (item._id === enquiryId ? { ...item, status } : item))
+        );
+        toast.success(`Offer ${status.toLowerCase()}!`);
+      } else {
+        toast.error("Failed to update offer status");
+      }
+    } catch (err) {
+      toast.error("Error updating status");
+    }
+  };
+
   const totalListings = products.length;
   const activeListings = products.filter((p) => p.isActive && p.status === "Available").length;
-  const soldListings = products.filter((p) => p.status === "Sold").length;
+  const pendingEnquiries = enquiries.filter((e) => e.status === "Pending").length;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
@@ -140,9 +187,9 @@ export default function MyListingsPage() {
             <Package className="w-3.5 h-3.5 text-brand-accent" />
             <span>Seller Dashboard</span>
           </div>
-          <h1 className="text-3xl font-extrabold text-brand-primary">My Product Listings</h1>
+          <h1 className="text-3xl font-extrabold text-brand-primary">Seller Center</h1>
           <p className="text-xs sm:text-sm text-brand-textMuted mt-1">
-            Manage your ads, update prices, mark items sold, or track buyer status.
+            Manage your ads, respond to student enquiries, and update item status.
           </p>
         </div>
 
@@ -155,168 +202,334 @@ export default function MyListingsPage() {
         </Link>
       </div>
 
-      {/* Stats Counter Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-5 rounded-2xl bg-brand-surface border border-brand-border">
-          <div className="text-xs font-bold text-brand-textMuted uppercase tracking-wider">Total Listings</div>
-          <div className="text-2xl font-black text-brand-primary mt-1">{totalListings}</div>
-        </div>
-        <div className="p-5 rounded-2xl bg-brand-surface border border-brand-border">
-          <div className="text-xs font-bold text-brand-textMuted uppercase tracking-wider">Active for Sale</div>
-          <div className="text-2xl font-black text-emerald-600 mt-1">{activeListings}</div>
-        </div>
-        <div className="p-5 rounded-2xl bg-brand-surface border border-brand-border">
-          <div className="text-xs font-bold text-brand-textMuted uppercase tracking-wider">Completed / Sold</div>
-          <div className="text-2xl font-black text-brand-accent mt-1">{soldListings}</div>
-        </div>
+      {/* Tabs Selector */}
+      <div className="flex items-center gap-3 border-b border-brand-border">
+        <button
+          onClick={() => setActiveTab("listings")}
+          className={`flex items-center gap-2 px-5 py-3 text-sm font-bold border-b-2 transition-all ${
+            activeTab === "listings"
+              ? "border-brand-primary text-brand-primary"
+              : "border-transparent text-brand-textMuted hover:text-brand-primary"
+          }`}
+        >
+          <Package className="w-4 h-4 text-brand-accent" />
+          <span>My Listings ({totalListings})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("enquiries")}
+          className={`flex items-center gap-2 px-5 py-3 text-sm font-bold border-b-2 transition-all relative ${
+            activeTab === "enquiries"
+              ? "border-brand-primary text-brand-primary"
+              : "border-transparent text-brand-textMuted hover:text-brand-primary"
+          }`}
+        >
+          <MessageSquare className="w-4 h-4 text-brand-accent" />
+          <span>Buyer Offers & Enquiries</span>
+          {pendingEnquiries > 0 && (
+            <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-accent text-white">
+              {pendingEnquiries}
+            </span>
+          )}
+        </button>
       </div>
 
-      {/* Listings Table / Cards */}
-      {loading ? (
-        <div className="space-y-4 animate-pulse">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-28 bg-brand-surface rounded-2xl border border-brand-border" />
-          ))}
-        </div>
-      ) : products.length === 0 ? (
-        <div className="bg-brand-surface rounded-3xl border border-brand-border p-12 text-center max-w-lg mx-auto space-y-4 shadow-sm">
-          <div className="w-16 h-16 rounded-2xl bg-brand-primary/10 text-brand-primary flex items-center justify-center mx-auto">
-            <Package className="w-8 h-8 text-brand-accent" />
+      {/* TAB 1: LISTINGS VIEW */}
+      {activeTab === "listings" && (
+        <div className="space-y-6">
+          {/* Stats Counter Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="p-5 rounded-2xl bg-brand-surface border border-brand-border">
+              <div className="text-xs font-bold text-brand-textMuted uppercase tracking-wider">Total Listings</div>
+              <div className="text-2xl font-black text-brand-primary mt-1">{totalListings}</div>
+            </div>
+            <div className="p-5 rounded-2xl bg-brand-surface border border-brand-border">
+              <div className="text-xs font-bold text-brand-textMuted uppercase tracking-wider">Active for Sale</div>
+              <div className="text-2xl font-black text-emerald-600 mt-1">{activeListings}</div>
+            </div>
+            <div className="p-5 rounded-2xl bg-brand-surface border border-brand-border">
+              <div className="text-xs font-bold text-brand-textMuted uppercase tracking-wider">Pending Enquiries</div>
+              <div className="text-2xl font-black text-brand-accent mt-1">{pendingEnquiries}</div>
+            </div>
           </div>
-          <h2 className="text-xl font-bold text-brand-primary">No listings created yet</h2>
-          <p className="text-xs sm:text-sm text-brand-textMuted leading-relaxed">
-            You haven't listed any items for sale under profile <strong>{currentEmail}</strong>.
-          </p>
-          <div className="pt-2">
-            <Link
-              href="/sell"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-brand-primary text-white text-xs font-semibold hover:bg-brand-primaryHover transition-all shadow-sm"
-            >
-              <PlusCircle className="w-4 h-4 text-brand-accent" />
-              <span>List an Item Now</span>
-            </Link>
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {products.map((item) => (
-            <div
-              key={item._id}
-              className={`p-5 rounded-2xl bg-brand-surface border transition-all shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 ${
-                !item.isActive ? "opacity-60 bg-gray-50 border-dashed border-gray-300" : "border-brand-border hover:border-brand-accent/50"
-              }`}
-            >
-              {/* Product Info */}
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-xl overflow-hidden bg-brand-canvas shrink-0 border border-brand-border">
-                  <img
-                    src={
-                      item.images?.[0] ||
-                      "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=300&q=80"
-                    }
-                    alt={item.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
 
-                <div className="space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-brand-primary/10 text-brand-primary uppercase">
-                      {item.category}
-                    </span>
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
-                        item.status === "Available"
-                          ? "bg-emerald-100 text-emerald-800"
-                          : item.status === "Reserved"
-                          ? "bg-amber-100 text-amber-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {item.status}
-                    </span>
-                    {!item.isActive && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-200 text-gray-700 uppercase">
-                        Draft / Hidden
-                      </span>
-                    )}
-                  </div>
-
-                  <h3 className="font-bold text-base text-brand-textMain hover:text-brand-primary">
-                    <Link href={`/marketplace/${item._id}`}>{item.name}</Link>
-                  </h3>
-
-                  <div className="flex items-center gap-4 text-xs text-brand-textMuted">
-                    <span className="font-extrabold text-brand-primary text-sm">
-                      {item.price === 0 ? "Free" : formatPrice(item.price)}
-                    </span>
-                    <span>•</span>
-                    <span>Listed {formatDate(item.createdAt)}</span>
-                    <span>•</span>
-                    <span>{item.condition}</span>
-                  </div>
-                </div>
+          {loading ? (
+            <div className="space-y-4 animate-pulse">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-28 bg-brand-surface rounded-2xl border border-brand-border" />
+              ))}
+            </div>
+          ) : products.length === 0 ? (
+            <div className="bg-brand-surface rounded-3xl border border-brand-border p-12 text-center max-w-lg mx-auto space-y-4 shadow-sm">
+              <div className="w-16 h-16 rounded-2xl bg-brand-primary/10 text-brand-primary flex items-center justify-center mx-auto">
+                <Package className="w-8 h-8 text-brand-accent" />
               </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-wrap items-center gap-2 pt-3 md:pt-0 border-t md:border-t-0 border-brand-border">
-                {/* Status Dropdown */}
-                <select
-                  value={item.status}
-                  disabled={actionLoading === item._id}
-                  onChange={(e) => handleStatusChange(item._id, e.target.value)}
-                  className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-brand-border bg-brand-canvas text-brand-textMain focus:outline-none focus:border-brand-primary"
-                >
-                  <option value="Available">Available</option>
-                  <option value="Reserved">Reserved</option>
-                  <option value="Sold">Sold</option>
-                </select>
-
-                {/* Active Toggle */}
-                <button
-                  onClick={() => handleToggleActive(item._id, item.isActive)}
-                  disabled={actionLoading === item._id}
-                  className={`p-2 rounded-xl border text-xs font-medium flex items-center gap-1 transition-colors ${
-                    item.isActive
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                      : "border-gray-200 bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                  title={item.isActive ? "Hide from marketplace" : "Publish to marketplace"}
-                >
-                  {item.isActive ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-                  <span className="hidden sm:inline">{item.isActive ? "Active" : "Hidden"}</span>
-                </button>
-
-                {/* View on Marketplace */}
+              <h2 className="text-xl font-bold text-brand-primary">No listings created yet</h2>
+              <p className="text-xs sm:text-sm text-brand-textMuted leading-relaxed">
+                You haven't listed any items for sale under profile <strong>{currentEmail}</strong>.
+              </p>
+              <div className="pt-2">
                 <Link
-                  href={`/marketplace/${item._id}`}
-                  className="p-2 rounded-xl border border-brand-border hover:bg-brand-canvas text-brand-textMuted hover:text-brand-primary transition-colors"
-                  title="View listing"
+                  href="/sell"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-brand-primary text-white text-xs font-semibold hover:bg-brand-primaryHover transition-all shadow-sm"
                 >
-                  <ExternalLink className="w-4 h-4" />
+                  <PlusCircle className="w-4 h-4 text-brand-accent" />
+                  <span>List an Item Now</span>
                 </Link>
-
-                {/* Edit */}
-                <Link
-                  href={`/marketplace/${item._id}/edit`}
-                  className="p-2 rounded-xl border border-brand-border hover:bg-brand-canvas text-brand-primary transition-colors"
-                  title="Edit listing"
-                >
-                  <Edit className="w-4 h-4" />
-                </Link>
-
-                {/* Delete */}
-                <button
-                  onClick={() => handleDelete(item._id)}
-                  disabled={actionLoading === item._id}
-                  className="p-2 rounded-xl border border-red-200 hover:bg-red-50 text-red-600 transition-colors"
-                  title="Delete listing"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
               </div>
             </div>
-          ))}
+          ) : (
+            <div className="space-y-4">
+              {products.map((item) => (
+                <div
+                  key={item._id}
+                  className={`p-5 rounded-2xl bg-brand-surface border transition-all shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+                    !item.isActive ? "opacity-60 bg-gray-50 border-dashed border-gray-300" : "border-brand-border hover:border-brand-accent/50"
+                  }`}
+                >
+                  {/* Product Info */}
+                  <div className="flex items-center gap-4">
+                    <div className="w-20 h-20 rounded-xl overflow-hidden bg-brand-canvas shrink-0 border border-brand-border">
+                      <img
+                        src={
+                          item.images?.[0] ||
+                          "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=300&q=80"
+                        }
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-brand-primary/10 text-brand-primary uppercase">
+                          {item.category}
+                        </span>
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
+                            item.status === "Available"
+                              ? "bg-emerald-100 text-emerald-800"
+                              : item.status === "Reserved"
+                              ? "bg-amber-100 text-amber-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {item.status}
+                        </span>
+                        {!item.isActive && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-200 text-gray-700 uppercase">
+                            Draft / Hidden
+                          </span>
+                        )}
+                      </div>
+
+                      <h3 className="font-bold text-base text-brand-textMain hover:text-brand-primary">
+                        <Link href={`/marketplace/${item._id}`}>{item.name}</Link>
+                      </h3>
+
+                      <div className="flex items-center gap-4 text-xs text-brand-textMuted">
+                        <span className="font-extrabold text-brand-primary text-sm">
+                          {item.price === 0 ? "Free" : formatPrice(item.price)}
+                        </span>
+                        <span>•</span>
+                        <span>Listed {formatDate(item.createdAt)}</span>
+                        <span>•</span>
+                        <span>{item.condition}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-wrap items-center gap-2 pt-3 md:pt-0 border-t md:border-t-0 border-brand-border">
+                    {/* Status Dropdown */}
+                    <select
+                      value={item.status}
+                      disabled={actionLoading === item._id}
+                      onChange={(e) => handleStatusChange(item._id, e.target.value)}
+                      className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-brand-border bg-brand-canvas text-brand-textMain focus:outline-none focus:border-brand-primary"
+                    >
+                      <option value="Available">Available</option>
+                      <option value="Reserved">Reserved</option>
+                      <option value="Sold">Sold</option>
+                    </select>
+
+                    {/* Active Toggle */}
+                    <button
+                      onClick={() => handleToggleActive(item._id, item.isActive)}
+                      disabled={actionLoading === item._id}
+                      className={`p-2 rounded-xl border text-xs font-medium flex items-center gap-1 transition-colors ${
+                        item.isActive
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                          : "border-gray-200 bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                      title={item.isActive ? "Hide from marketplace" : "Publish to marketplace"}
+                    >
+                      {item.isActive ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                      <span className="hidden sm:inline">{item.isActive ? "Active" : "Hidden"}</span>
+                    </button>
+
+                    {/* View */}
+                    <Link
+                      href={`/marketplace/${item._id}`}
+                      className="p-2 rounded-xl border border-brand-border hover:bg-brand-canvas text-brand-textMuted hover:text-brand-primary transition-colors"
+                      title="View listing"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </Link>
+
+                    {/* Edit */}
+                    <Link
+                      href={`/marketplace/${item._id}/edit`}
+                      className="p-2 rounded-xl border border-brand-border hover:bg-brand-canvas text-brand-primary transition-colors"
+                      title="Edit listing"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Link>
+
+                    {/* Delete */}
+                    <button
+                      onClick={() => handleDelete(item._id)}
+                      disabled={actionLoading === item._id}
+                      className="p-2 rounded-xl border border-red-200 hover:bg-red-50 text-red-600 transition-colors"
+                      title="Delete listing"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 2: ENQUIRIES & OFFERS VIEW */}
+      {activeTab === "enquiries" && (
+        <div className="space-y-4">
+          {enquiriesLoading ? (
+            <div className="space-y-4 animate-pulse">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-28 bg-brand-surface rounded-2xl border border-brand-border" />
+              ))}
+            </div>
+          ) : enquiries.length === 0 ? (
+            <div className="bg-brand-surface rounded-3xl border border-brand-border p-12 text-center max-w-lg mx-auto space-y-4 shadow-sm">
+              <div className="w-16 h-16 rounded-2xl bg-brand-primary/10 text-brand-primary flex items-center justify-center mx-auto">
+                <MessageSquare className="w-8 h-8 text-brand-accent" />
+              </div>
+              <h2 className="text-xl font-bold text-brand-primary">No enquiries yet</h2>
+              <p className="text-xs sm:text-sm text-brand-textMuted leading-relaxed">
+                When fellow students send messages or negotiate counter offers on your listings, they will show up here.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {enquiries.map((enq) => {
+                const product = enq.productId;
+                return (
+                  <div
+                    key={enq._id}
+                    className="p-5 rounded-2xl bg-brand-surface border border-brand-border shadow-sm space-y-3"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-brand-border">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-brand-primary text-white flex items-center justify-center font-bold text-sm">
+                          {enq.buyerName?.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="font-bold text-sm text-brand-primary">{enq.buyerName}</div>
+                          <div className="text-xs text-brand-textMuted flex items-center gap-1">
+                            <Mail className="w-3 h-3 text-brand-accent" />
+                            <a href={`mailto:${enq.buyerEmail}`} className="underline">
+                              {enq.buyerEmail}
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                            enq.status === "Accepted"
+                              ? "bg-emerald-100 text-emerald-800"
+                              : enq.status === "Rejected"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-amber-100 text-amber-800"
+                          }`}
+                        >
+                          {enq.status}
+                        </span>
+                        <span className="text-[11px] text-brand-textMuted">{formatDate(enq.createdAt)}</span>
+                      </div>
+                    </div>
+
+                    {/* Product & Offer details */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-brand-canvas p-3 rounded-xl">
+                      <div>
+                        <span className="text-brand-textMuted font-medium">Product Inquired: </span>
+                        {product ? (
+                          <Link href={`/marketplace/${product._id}`} className="font-bold text-brand-primary hover:underline">
+                            {product.name}
+                          </Link>
+                        ) : (
+                          <span className="text-brand-textMuted italic">[Deleted Product]</span>
+                        )}
+                      </div>
+
+                      {enq.offerPrice && (
+                        <div>
+                          <span className="text-brand-textMuted font-medium">Counter Offer: </span>
+                          <span className="font-black text-brand-primary text-sm">
+                            {formatPrice(enq.offerPrice)}
+                          </span>
+                          {product && (
+                            <span className="text-brand-textMuted text-[10px] ml-1">
+                              (Asking: {formatPrice(product.price)})
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Message */}
+                    <div className="text-xs text-brand-textMain bg-brand-surface p-2.5 rounded-xl border border-brand-border">
+                      <span className="font-semibold text-brand-primary block mb-0.5">Buyer Message:</span>
+                      <p className="whitespace-pre-line text-brand-textMain/90">{enq.message}</p>
+                    </div>
+
+                    {/* Accept / Reject Offer Actions */}
+                    <div className="flex items-center justify-end gap-2 pt-1">
+                      {enq.status === "Pending" ? (
+                        <>
+                          <button
+                            onClick={() => handleEnquiryStatus(enq._id, "Rejected")}
+                            className="px-3 py-1.5 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold flex items-center gap-1 transition-colors"
+                          >
+                            <XCircle className="w-3.5 h-3.5" />
+                            <span>Decline Offer</span>
+                          </button>
+                          <button
+                            onClick={() => handleEnquiryStatus(enq._id, "Accepted")}
+                            className="px-4 py-1.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-semibold flex items-center gap-1 transition-colors"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Accept Offer</span>
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => handleEnquiryStatus(enq._id, "Pending")}
+                          className="text-xs text-brand-textMuted hover:text-brand-primary underline"
+                        >
+                          Reset to Pending
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>
