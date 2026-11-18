@@ -5,12 +5,14 @@ import { useSearchParams } from "next/navigation";
 import SearchBar from "../../components/SearchBar";
 import ProductGrid from "../../components/ProductGrid";
 import CategoryFilter from "../../components/CategoryFilter";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, UserCheck, X } from "lucide-react";
 
 function MarketplaceContent() {
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get("category") || "All";
   const initialSearch = searchParams.get("search") || "";
+  const initialSellerEmail = searchParams.get("sellerEmail") || "";
+  const initialSellerName = searchParams.get("sellerName") || "";
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,6 +22,8 @@ function MarketplaceContent() {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sort, setSort] = useState("newest");
+  const [sellerEmail, setSellerEmail] = useState(initialSellerEmail);
+  const [sellerName, setSellerName] = useState(initialSellerName);
   const [favoriteIds, setFavoriteIds] = useState([]);
 
   // Fetch user favorites
@@ -46,6 +50,7 @@ function MarketplaceContent() {
       if (condition && condition !== "All") params.append("condition", condition);
       if (minPrice) params.append("minPrice", minPrice);
       if (maxPrice) params.append("maxPrice", maxPrice);
+      if (sellerEmail) params.append("sellerEmail", sellerEmail);
       if (sort) params.append("sort", sort);
 
       const res = await fetch(`/api/products?${params.toString()}`);
@@ -66,7 +71,7 @@ function MarketplaceContent() {
 
   useEffect(() => {
     fetchProducts();
-  }, [search, category, condition, minPrice, maxPrice, sort]);
+  }, [search, category, condition, minPrice, maxPrice, sellerEmail, sort]);
 
   const handleResetFilters = () => {
     setSearch("");
@@ -75,6 +80,9 @@ function MarketplaceContent() {
     setMinPrice("");
     setMaxPrice("");
     setSort("newest");
+    setSellerEmail("");
+    setSellerName("");
+    window.history.replaceState({}, "", "/marketplace");
   };
 
   return (
@@ -97,6 +105,37 @@ function MarketplaceContent() {
           />
         </div>
       </div>
+
+      {/* Seller Specific Filter Notice Banner */}
+      {sellerEmail && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-brand-surface border border-brand-accent/40 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-brand-primary text-white flex items-center justify-center font-bold text-sm shrink-0">
+              {sellerName ? sellerName.charAt(0).toUpperCase() : "S"}
+            </div>
+            <div>
+              <div className="text-[11px] font-bold text-brand-accent uppercase tracking-wider flex items-center gap-1.5">
+                <UserCheck className="w-3.5 h-3.5" />
+                <span>Showing items by student seller</span>
+              </div>
+              <div className="text-sm font-extrabold text-brand-primary">
+                {sellerName ? `${sellerName} (${sellerEmail})` : sellerEmail}
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              setSellerEmail("");
+              setSellerName("");
+              window.history.replaceState({}, "", "/marketplace");
+            }}
+            className="self-start sm:self-center flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-brand-border hover:bg-brand-canvas text-xs font-semibold text-brand-textMuted hover:text-brand-primary transition-colors"
+          >
+            <X className="w-4 h-4" />
+            <span>Clear Seller Filter</span>
+          </button>
+        </div>
+      )}
 
       {/* Main Layout: Filters Sidebar + Products Grid */}
       <div className="flex flex-col lg:flex-row gap-8 items-start">

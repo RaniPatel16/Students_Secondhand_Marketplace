@@ -34,9 +34,10 @@ export default function ProductDetailPage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favLoading, setFavLoading] = useState(false);
   const [similarProducts, setSimilarProducts] = useState([]);
+  const [sellerItemCount, setSellerItemCount] = useState(0);
   const [enquiryModalOpen, setEnquiryModalOpen] = useState(false);
 
-  // Fetch product data and similar items
+  // Fetch product data, similar items, and seller listing count
   useEffect(() => {
     async function loadProduct() {
       try {
@@ -51,6 +52,16 @@ export default function ProductDetailPage() {
             const simData = await simRes.json();
             if (simData.success && Array.isArray(simData.products)) {
               setSimilarProducts(simData.products.filter((p) => p._id !== id));
+            }
+          }
+
+          // Fetch other active items listed by this seller
+          if (data.product.sellerEmail) {
+            const sellerRes = await fetch(`/api/products?sellerEmail=${encodeURIComponent(data.product.sellerEmail)}`);
+            const sellerData = await sellerRes.json();
+            if (sellerData.success && Array.isArray(sellerData.products)) {
+              const otherItems = sellerData.products.filter((p) => p._id !== id);
+              setSellerItemCount(otherItems.length);
             }
           }
         } else {
@@ -330,6 +341,21 @@ export default function ProductDetailPage() {
                 <Calendar className="w-4 h-4 text-brand-textMuted shrink-0" />
                 <span>Listed: {formatDate(product.createdAt)}</span>
               </div>
+            </div>
+
+            {/* View All Listings by this Seller Button */}
+            <div className="pt-3 border-t border-brand-border">
+              <Link
+                href={`/marketplace?sellerEmail=${encodeURIComponent(product.sellerEmail)}&sellerName=${encodeURIComponent(product.sellerName)}`}
+                className="w-full py-2.5 px-4 rounded-xl bg-brand-primary/5 hover:bg-brand-primary text-brand-primary hover:text-white border border-brand-border hover:border-brand-primary text-xs font-semibold flex items-center justify-center gap-2 transition-all group"
+              >
+                <span>
+                  {sellerItemCount > 0
+                    ? `Browse ${sellerItemCount} other item${sellerItemCount > 1 ? "s" : ""} by this seller`
+                    : `View all listings by ${product.sellerName}`}
+                </span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </Link>
             </div>
           </div>
         </div>

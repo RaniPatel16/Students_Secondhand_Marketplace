@@ -36,7 +36,7 @@ export default function MyListingsPage() {
   const loadMyProducts = async (email) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/products?sellerEmail=${encodeURIComponent(email)}`);
+      const res = await fetch(`/api/products?sellerEmail=${encodeURIComponent(email)}&includeDrafts=true`);
       const data = await res.json();
       if (data.success && Array.isArray(data.products)) {
         setProducts(data.products);

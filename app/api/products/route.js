@@ -14,17 +14,21 @@ export async function GET(request) {
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
     const sellerEmail = searchParams.get("sellerEmail");
+    const includeDrafts = searchParams.get("includeDrafts") === "true";
     const sort = searchParams.get("sort") || "newest";
     const limit = parseInt(searchParams.get("limit")) || 0;
 
     // Build Mongoose query
     const query = {};
 
-    // Filter by seller email if provided (for My Listings view)
+    // Filter by seller email if provided
     if (sellerEmail) {
       query.sellerEmail = sellerEmail.toLowerCase();
+      // If not seller's own dashboard, only show active listings
+      if (!includeDrafts) {
+        query.isActive = true;
+      }
     } else {
-      // By default, only show active products in public marketplace
       query.isActive = true;
     }
 
