@@ -27,6 +27,14 @@ import {
 import { formatPrice, formatDate } from "../../lib/utils";
 import toast from "react-hot-toast";
 
+// =============================================================================
+// MyListingsPage (Student Dashboard)
+// Comprehensive dashboard with 3 primary operational tabs:
+// 1. "My Active Listings": Manage products (Available / Reserved / Sold, active/draft toggle, delete)
+// 2. "Received Enquiries": Inbox of buyer messages & counter-offers to Accept or Reject
+// 3. "My Sent Offers (as Buyer)": Track offers this student sent to other campus sellers
+// =============================================================================
+
 export default function MyListingsPage() {
   const [activeTab, setActiveTab] = useState("listings"); // 'listings' | 'enquiries' | 'sentOffers'
   const [products, setProducts] = useState([]);

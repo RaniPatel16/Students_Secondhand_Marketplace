@@ -6,6 +6,16 @@ import { Heart, Trash2, ArrowRight, ShoppingBag, MapPin, Tag } from "lucide-reac
 import { formatPrice } from "../../lib/utils";
 import toast from "react-hot-toast";
 
+// =============================================================================
+// FavoritesPage (/favorites)
+// Displays products bookmarked by the student.
+// Features:
+// - Fetches saved listings by the user's active campus email
+// - Displays item status (Available, Sold, Reserved) so buyer knows if it's still available
+// - One-click remove from saved items (DELETE /api/favorites/[id])
+// - Direct link to product detail page or empty state CTA to explore marketplace
+// =============================================================================
+
 export default function FavoritesPage() {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);

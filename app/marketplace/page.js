@@ -7,6 +7,18 @@ import ProductGrid from "../../components/ProductGrid";
 import CategoryFilter from "../../components/CategoryFilter";
 import { ArrowUpDown, UserCheck, X } from "lucide-react";
 
+// =============================================================================
+// Marketplace Discovery Page (/marketplace)
+// Central hub for students to discover, search, and filter second-hand items.
+// Features:
+// - Live keyword search (matching item title and description)
+// - Category selector (Books, Electronics, Furniture, Stationery, Other)
+// - Condition filter (New, Like New, Good, Fair)
+// - Price range filter (Min & Max in INR)
+// - Specific seller filter ("Browse items by this student")
+// - Sorting by Newest, Price (Low to High), and Price (High to Low)
+// =============================================================================
+
 function MarketplaceContent() {
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get("category") || "All";

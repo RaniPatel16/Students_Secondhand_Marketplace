@@ -3,6 +3,12 @@
 import { useState } from "react";
 import { Filter, X, RotateCcw, Check, Sparkles } from "lucide-react";
 
+// =============================================================================
+// CategoryFilter Component
+// Provides interactive filtering by Category, Condition, and Price Range (Min/Max).
+// Includes both a responsive desktop sidebar and a mobile slide-out modal.
+// =============================================================================
+
 export const CATEGORIES = [
   { id: "All", name: "All Categories" },
   { id: "Books", name: "Books" },
@@ -24,16 +30,19 @@ export default function CategoryFilter({
   onPriceChange,
   onResetFilters,
 }) {
+  // Local state for price inputs until the student clicks 'Apply Price'
   const [localMin, setLocalMin] = useState(minPrice);
   const [localMax, setLocalMax] = useState(maxPrice);
   const [isOpenMobile, setIsOpenMobile] = useState(false);
 
+  // Trigger price filter callback to parent component
   const handleApplyPrice = (e) => {
     e.preventDefault();
     onPriceChange(localMin, localMax);
     setIsOpenMobile(false);
   };
 
+  // Reset local state and notify parent to clear all active filters
   const handleReset = () => {
     setLocalMin("");
     setLocalMax("");

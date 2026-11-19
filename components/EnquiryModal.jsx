@@ -5,7 +5,14 @@ import { X, Send, MessageSquare, DollarSign, CheckCircle2, Loader2 } from "lucid
 import { formatPrice } from "../lib/utils";
 import toast from "react-hot-toast";
 
+// =============================================================================
+// EnquiryModal Component
+// Interactive modal for prospective student buyers to contact the seller.
+// Allows asking questions, requesting meetups, and submitting optional counter-offers.
+// =============================================================================
+
 export default function EnquiryModal({ isOpen, onClose, product }) {
+  // Form fields
   const [buyerName, setBuyerName] = useState("Rani Patel");
   const [buyerEmail, setBuyerEmail] = useState("rani.patel@campus.edu");
   const [message, setMessage] = useState("Hi! Is this item still available? Can we meet on campus to inspect it?");
@@ -13,6 +20,7 @@ export default function EnquiryModal({ isOpen, onClose, product }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  // Pre-fill active student profile info from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("campusmart_user_email");
     if (saved) {
@@ -23,6 +31,7 @@ export default function EnquiryModal({ isOpen, onClose, product }) {
 
   if (!isOpen || !product) return null;
 
+  // Handle form submission to POST /api/enquiries
   const handleSubmit = async (e) => {
     e.preventDefault();
 

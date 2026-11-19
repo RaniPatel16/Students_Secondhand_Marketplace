@@ -2,17 +2,22 @@ import { NextResponse } from "next/server";
 import connectToDatabase from "../../../../lib/mongodb";
 import Favorite from "../../../../models/Favorite";
 
-// DELETE /api/favorites/[id] - Remove product from favorites
+// =============================================================================
+// DELETE /api/favorites/[id]
+// Removes a product from a student's saved favorites list
+// Supports deleting by favorite record ID or by productId with userEmail
+// =============================================================================
 export async function DELETE(request, { params }) {
   try {
+    // 1. Establish database connection
     await connectToDatabase();
     const { id } = params;
     const { searchParams } = new URL(request.url);
     const userEmail = searchParams.get("userEmail");
 
+    // 2. Build deletion filter: either by product reference + user email, or directly by favorite _id
     let query = {};
     if (userEmail) {
-      // Allow deleting by productId matching the user's email
       query = {
         userEmail: userEmail.toLowerCase(),
         $or: [{ productId: id }, { _id: id }],
@@ -21,6 +26,7 @@ export async function DELETE(request, { params }) {
       query = { _id: id };
     }
 
+    // 3. Find and remove matching favorite entry
     const deleted = await Favorite.findOneAndDelete(query);
 
     if (!deleted) {

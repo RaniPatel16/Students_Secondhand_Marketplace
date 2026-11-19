@@ -2,14 +2,22 @@ import { NextResponse } from "next/server";
 import connectToDatabase from "../../../../lib/mongodb";
 import Enquiry from "../../../../models/Enquiry";
 
-// PATCH /api/enquiries/[id] - Update enquiry status (Pending, Accepted, Rejected)
+// =============================================================================
+// PATCH /api/enquiries/[id]
+// Allows a seller to accept or reject an enquiry or counter-offer
+// Permitted status transitions: "Pending", "Accepted", "Rejected"
+// =============================================================================
 export async function PATCH(request, { params }) {
   try {
+    // 1. Establish database connection
     await connectToDatabase();
     const { id } = params;
+
+    // 2. Parse status from request body
     const body = await request.json();
     const { status } = body;
 
+    // 3. Validate that the status is one of the permitted enum values
     const validStatuses = ["Pending", "Accepted", "Rejected"];
     if (!status || !validStatuses.includes(status)) {
       return NextResponse.json(
@@ -18,6 +26,7 @@ export async function PATCH(request, { params }) {
       );
     }
 
+    // 4. Update enquiry status and return updated document
     const updated = await Enquiry.findByIdAndUpdate(
       id,
       { $set: { status } },
@@ -45,12 +54,17 @@ export async function PATCH(request, { params }) {
   }
 }
 
-// DELETE /api/enquiries/[id] - Delete an enquiry
+// =============================================================================
+// DELETE /api/enquiries/[id]
+// Allows removing an old or dismissed enquiry
+// =============================================================================
 export async function DELETE(request, { params }) {
   try {
+    // 1. Establish database connection
     await connectToDatabase();
     const { id } = params;
 
+    // 2. Find and delete enquiry by ID
     const deleted = await Enquiry.findByIdAndDelete(id);
 
     if (!deleted) {

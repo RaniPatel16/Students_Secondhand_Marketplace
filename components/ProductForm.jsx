@@ -6,6 +6,14 @@ import { Upload, X, Image as ImageIcon, Sparkles, AlertCircle, Loader2 } from "l
 import { validateProductData } from "../lib/validations";
 import toast from "react-hot-toast";
 
+// =============================================================================
+// ProductForm Component
+// Reusable form component used for:
+// 1. Publishing a new listing at /sell
+// 2. Editing an existing listing at /marketplace/[id]/edit
+// Supports image uploads (Base64 data URIs) and direct image URLs.
+// =============================================================================
+
 const CATEGORIES = ["Books", "Electronics", "Furniture", "Stationery", "Other"];
 const CONDITIONS = ["New", "Like New", "Good", "Fair"];
 const LISTING_TYPES = ["For Sale", "Free", "Exchange"];
@@ -13,6 +21,7 @@ const LISTING_TYPES = ["For Sale", "Free", "Exchange"];
 export default function ProductForm({ initialData = null, isEdit = false }) {
   const router = useRouter();
 
+  // Controlled form state
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
     description: initialData?.description || "",
@@ -46,6 +55,7 @@ export default function ProductForm({ initialData = null, isEdit = false }) {
     }
   }, [initialData]);
 
+  // Handle input field changes and clear active error message for that field
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -110,11 +120,11 @@ export default function ProductForm({ initialData = null, isEdit = false }) {
     }));
   };
 
-  // Submit handler
+  // Submit product creation (POST) or update (PUT)
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Frontend validation
+    // 1. Client-side validation check
     const validation = validateProductData(formData);
     if (!validation.isValid) {
       setErrors(validation.errors);
@@ -125,6 +135,7 @@ export default function ProductForm({ initialData = null, isEdit = false }) {
     setSubmitting(true);
 
     try {
+      // 2. Select appropriate endpoint and HTTP method
       const endpoint = isEdit ? `/api/products/${initialData._id}` : "/api/products";
       const method = isEdit ? "PUT" : "POST";
 

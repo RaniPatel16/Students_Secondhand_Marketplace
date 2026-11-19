@@ -24,6 +24,17 @@ import ProductCard from "../../../components/ProductCard";
 import EnquiryModal from "../../../components/EnquiryModal";
 import toast from "react-hot-toast";
 
+// =============================================================================
+// ProductDetailPage Component (/marketplace/[id])
+// Detailed view for a single product listing including:
+// - Interactive photo gallery (multi-image selector)
+// - Price, discount calculation, category, condition & description
+// - Seller profile card with direct contact info (email, phone, campus location)
+// - "Browse X other items by this seller" filter shortcut
+// - "Contact Seller / Make Offer" enquiry modal trigger
+// - Similar items recommendation grid from the same category
+// =============================================================================
+
 export default function ProductDetailPage() {
   const { id } = useParams();
   const router = useRouter();
