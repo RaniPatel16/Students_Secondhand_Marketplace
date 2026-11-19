@@ -5,8 +5,10 @@ import Product from "../../../models/Product";
 // GET /api/products - List products with multi-attribute filtering & sorting
 export async function GET(request) {
   try {
+    // 1. Connect to MongoDB database
     await connectToDatabase();
 
+    // 2. Read query parameters from URL
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
     const category = searchParams.get("category") || "";
@@ -18,37 +20,38 @@ export async function GET(request) {
     const sort = searchParams.get("sort") || "newest";
     const limit = parseInt(searchParams.get("limit")) || 0;
 
-    // Build Mongoose query
+    // 3. Build Mongoose filter query object
     const query = {};
 
-    // Filter by seller email if provided
+    // Filter by seller email (for My Listings or Seller Profile view)
     if (sellerEmail) {
       query.sellerEmail = sellerEmail.toLowerCase();
-      // If not seller's own dashboard, only show active listings
+      // Only include drafts if viewing own seller dashboard
       if (!includeDrafts) {
         query.isActive = true;
       }
     } else {
+      // By default, public marketplace only displays active listings
       query.isActive = true;
     }
 
-    // Text search in name or description
+    // Text search matching item name or description (case-insensitive)
     if (search.trim()) {
       const searchRegex = new RegExp(search.trim(), "i");
       query.$or = [{ name: searchRegex }, { description: searchRegex }];
     }
 
-    // Category filter
+    // Filter by category (Books, Electronics, Furniture, Stationery, Other)
     if (category && category !== "All") {
       query.category = category;
     }
 
-    // Condition filter
+    // Filter by condition (New, Like New, Good, Fair)
     if (condition && condition !== "All") {
       query.condition = condition;
     }
 
-    // Price range filter
+    // Filter by price range (Min / Max in Rupees)
     if (minPrice || maxPrice) {
       query.price = {};
       if (minPrice && !isNaN(Number(minPrice))) {
@@ -59,16 +62,17 @@ export async function GET(request) {
       }
     }
 
-    // Sorting logic
-    let sortOptions = { createdAt: -1 }; // default newest
+    // 4. Determine sorting order
+    let sortOptions = { createdAt: -1 }; // default newest first
     if (sort === "price_asc") {
-      sortOptions = { price: 1 };
+      sortOptions = { price: 1 }; // price low to high
     } else if (sort === "price_desc") {
-      sortOptions = { price: -1 };
+      sortOptions = { price: -1 }; // price high to low
     } else if (sort === "oldest") {
       sortOptions = { createdAt: 1 };
     }
 
+    // 5. Execute query with optional limit
     let productsQuery = Product.find(query).sort(sortOptions);
 
     if (limit > 0) {
@@ -77,6 +81,7 @@ export async function GET(request) {
 
     const products = await productsQuery.lean();
 
+    // 6. Return response
     return NextResponse.json({
       success: true,
       count: products.length,
@@ -98,8 +103,10 @@ export async function GET(request) {
 // POST /api/products - Create a new product listing
 export async function POST(request) {
   try {
+    // 1. Connect to database
     await connectToDatabase();
 
+    // 2. Parse request body
     const body = await request.json();
     const {
       name,
@@ -116,7 +123,7 @@ export async function POST(request) {
       location,
     } = body;
 
-    // Validate required fields
+    // 3. Validate required fields
     if (!name || !description || price === undefined || !category || !condition || !sellerName || !sellerEmail || !sellerPhone || !location) {
       return NextResponse.json(
         {
@@ -127,7 +134,7 @@ export async function POST(request) {
       );
     }
 
-    // Validate numerical values
+    // 4. Validate numeric price
     const numericPrice = Number(price);
     if (isNaN(numericPrice) || numericPrice < 0) {
       return NextResponse.json(
@@ -139,6 +146,7 @@ export async function POST(request) {
       );
     }
 
+    // 5. Insert new product document
     const newProduct = await Product.create({
       name: name.trim(),
       description: description.trim(),
@@ -158,6 +166,7 @@ export async function POST(request) {
       isActive: true,
     });
 
+    // 6. Return success response
     return NextResponse.json(
       {
         success: true,

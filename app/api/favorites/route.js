@@ -6,6 +6,7 @@ import Product from "../../../models/Product";
 // GET /api/favorites - Get user's favorite products
 export async function GET(request) {
   try {
+    // 1. Connect to database
     await connectToDatabase();
     const { searchParams } = new URL(request.url);
     const userEmail = searchParams.get("userEmail");
@@ -17,12 +18,13 @@ export async function GET(request) {
       );
     }
 
+    // 2. Fetch favorites for this user and populate product details
     const favorites = await Favorite.find({ userEmail: userEmail.toLowerCase() })
       .populate("productId")
       .sort({ createdAt: -1 })
       .lean();
 
-    // Filter out any favorites whose products were deleted
+    // 3. Filter out any favorites whose products were deleted
     const validFavorites = favorites.filter((fav) => fav.productId != null);
 
     return NextResponse.json({
@@ -39,13 +41,15 @@ export async function GET(request) {
   }
 }
 
-// POST /api/favorites - Add product to favorites
+// POST /api/favorites - Add product to user favorites
 export async function POST(request) {
   try {
+    // 1. Connect to database
     await connectToDatabase();
     const body = await request.json();
     const { productId, userEmail } = body;
 
+    // 2. Validate inputs
     if (!productId || !userEmail) {
       return NextResponse.json(
         { success: false, message: "Product ID and user email are required" },
@@ -53,7 +57,7 @@ export async function POST(request) {
       );
     }
 
-    // Check if product exists
+    // 3. Verify product exists
     const product = await Product.findById(productId);
     if (!product) {
       return NextResponse.json(
@@ -62,7 +66,7 @@ export async function POST(request) {
       );
     }
 
-    // Upsert or create favorite record
+    // 4. Upsert favorite record to prevent duplicates
     const favorite = await Favorite.findOneAndUpdate(
       { userEmail: userEmail.toLowerCase(), productId },
       { userEmail: userEmail.toLowerCase(), productId },

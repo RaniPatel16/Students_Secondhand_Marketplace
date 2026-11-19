@@ -7,9 +7,11 @@ import Enquiry from "../../../../models/Enquiry";
 // GET /api/products/[id] - Get single product details
 export async function GET(request, { params }) {
   try {
+    // 1. Connect to database
     await connectToDatabase();
     const { id } = params;
 
+    // 2. Query product by MongoDB ObjectId
     const product = await Product.findById(id).lean();
 
     if (!product) {
@@ -32,13 +34,15 @@ export async function GET(request, { params }) {
   }
 }
 
-// PUT /api/products/[id] - Update product details or status
+// PUT /api/products/[id] - Update product details or status (Available, Reserved, Sold)
 export async function PUT(request, { params }) {
   try {
+    // 1. Connect to database
     await connectToDatabase();
     const { id } = params;
     const updateData = await request.json();
 
+    // 2. Find and update product with validation
     const updatedProduct = await Product.findByIdAndUpdate(
       id,
       { $set: updateData },
@@ -66,12 +70,14 @@ export async function PUT(request, { params }) {
   }
 }
 
-// DELETE /api/products/[id] - Delete product listing
+// DELETE /api/products/[id] - Delete product listing with cascade cleanup
 export async function DELETE(request, { params }) {
   try {
+    // 1. Connect to database
     await connectToDatabase();
     const { id } = params;
 
+    // 2. Remove product from database
     const deletedProduct = await Product.findByIdAndDelete(id);
 
     if (!deletedProduct) {
@@ -81,7 +87,7 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    // Cascade delete: remove favorites and enquiries tied to this product
+    // 3. Cascade cleanup: automatically remove saved favorites and enquiries tied to this deleted product
     await Promise.all([
       Favorite.deleteMany({ productId: id }),
       Enquiry.deleteMany({ productId: id }),
