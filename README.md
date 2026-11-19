@@ -1,90 +1,8 @@
 # CampusMart – Student Second-Hand Marketplace 🎓📦
 
-> **Buy Smart. Sell Easy. Reuse More.**  
-> A modern, full-stack campus peer-to-peer marketplace built with **Next.js (App Router)**, **Tailwind CSS**, and **MongoDB / Mongoose**. Designed specifically for university students to trade textbooks, scientific calculators, stationery, hostel furniture, and campus essentials safely.
+A full-stack second-hand marketplace web application built for college students to buy, sell, and exchange used textbooks, scientific calculators, stationery, and hostel essentials.
 
----
-
-## 🎨 Theme & Color Palette
-
-Designed according to modern marketplace guidelines with a refined Oxford Green and Champagne Gold aesthetic:
-
-| Element | Hex Code | Visual Tone |
-| :--- | :---: | :--- |
-| **Primary Brand** | `#0F3A2E` | Deep British Forest Emerald / Oxford Green |
-| **Accent & Highlights** | `#C5A059` | Warm Champagne Gold |
-| **Background Canvas** | `#FBF9F5` | Alabaster Ivory |
-| **Cards & Surfaces** | `#FFFFFF` | Pure White |
-| **Borders & Dividers** | `#E7E2D6` | Warm Parchment |
-| **Main Typography** | `#13221C` | Deep Pine Charcoal |
-| **Muted Typography** | `#617169` | Muted Sage Slate |
-
----
-
-## 🚀 Key Features
-
-### 1. 🏠 Marketplace Landing Page (`/`)
-- Hero section with quick search and CTA buttons.
-- Category shortcuts (Books, Electronics, Hostel Furniture, Stationery, Other).
-- **Featured Campus Listings** and **Recently Added Items** dynamically loaded from MongoDB.
-- Value proposition highlights (Zero commission, Student discounts, Campus safety).
-
-### 2. 🔍 Marketplace Exploration (`/marketplace`)
-- Live search across product names and descriptions.
-- Multi-faceted filter sidebar:
-  - **Category**: Filter by Books, Electronics, Furniture, Stationery, Other.
-  - **Condition**: New, Like New, Good, Fair.
-  - **Price Range**: Custom minimum and maximum price in Indian Rupees (₹).
-- Sorting options:
-  - Newest Listed
-  - Price: Low to High
-  - Price: High to Low
-  - Oldest First
-- Responsive grid with loading skeletons and empty states.
-
-### 3. 📄 Product Details View (`/marketplace/[id]`)
-- Product photo gallery with primary view and thumbnail selection.
-- Clear pricing, original price strike-through, and calculated savings discount badge.
-- Verified student seller information card (name, hostel location, phone, email).
-- Direct **"Contact Seller / Make Counter Offer"** modal.
-- Persistent **"Add to Favorites"** toggle button.
-- Related products in the same category.
-- **"Browse other items by this seller"** button: One-click filter to view all products listed by the student seller.
-
-### 4. ➕ Sell Item Form (`/sell`)
-- Comprehensive item creation form with client and server-side validation.
-- Fields: Title, Category, Condition, Listing Type (For Sale / Free / Exchange), Price, Original Price, Description, Seller Details (Name, Email, Phone, Location).
-- Support for image upload from local device (base64) or direct image URL.
-- Live photo preview and image deletion prior to posting.
-
-### 5. 📦 Student Dashboard & Offers Manager (`/my-listings`)
-- **My Listings Tab**: View all products listed under the current student profile; update status (`Available`, `Reserved`, `Sold`); toggle active visibility; edit or delete listings.
-- **Received Offers Tab**: View buyer messages and proposed counter-offers; accept or decline offers in real-time.
-- **My Sent Offers (as Buyer) Tab**: Track all enquiries and counter-offers you sent to other sellers; check real-time status (`Pending`, `Accepted`, `Rejected`); access direct seller contact details upon acceptance; withdraw/cancel offers.
-
-### 6. ❤️ Saved Items Wishlist (`/favorites`)
-- Persistent MongoDB-backed wishlist tied to student profile.
-- Quick remove from favorites.
-- Direct navigation back to product details.
-
-### 7. 👤 Demo Profile Switcher
-- Easy top-bar demo student switcher:
-  - `rani.patel@campus.edu` (Rani Patel)
-  - `arjun.sharma@campus.edu` (Arjun Sharma)
-  - `sneha.verma@campus.edu` (Sneha Verma)
-
----
-
-## 🛠️ Technology Stack
-
-- **Framework**: Next.js 14 (App Router)
-- **Language**: JavaScript (JSX)
-- **Styling**: Tailwind CSS
-- **Database**: MongoDB
-- **ODM**: Mongoose
-- **Icons**: Lucide React
-- **Notifications**: React Hot Toast
-- **Deployment**: Vercel
+Built with **Next.js 14 (App Router)**, **Tailwind CSS**, and **MongoDB / Mongoose**.
 
 ---
 
@@ -95,49 +13,49 @@ campusmart/
 ├── app/
 │   ├── api/
 │   │   ├── products/
-│   │   │   ├── route.js              # GET all (filter/search), POST create
+│   │   │   ├── route.js              # GET all (filter/search), POST create product
 │   │   │   └── [id]/
 │   │   │       └── route.js          # GET single, PUT update, DELETE product
 │   │   ├── favorites/
-│   │   │   ├── route.js              # GET user favorites, POST add
+│   │   │   ├── route.js              # GET user favorites, POST add favorite
 │   │   │   └── [id]/
 │   │   │       └── route.js          # DELETE favorite
 │   │   └── enquiries/
-│   │       ├── route.js              # GET enquiries, POST create
+│   │       ├── route.js              # GET enquiries, POST create enquiry/offer
 │   │       └── [id]/
-│   │           └── route.js          # PATCH status, DELETE enquiry
+│   │           └── route.js          # PATCH status (Accept/Reject), DELETE enquiry
 │   ├── marketplace/
-│   │   ├── page.js                   # Marketplace grid & filters
+│   │   ├── page.js                   # Marketplace grid, search, filter & sort
 │   │   └── [id]/
-│   │       ├── page.js               # Product details & enquiry modal
+│   │       ├── page.js               # Product details, seller info & enquiry modal
 │   │       └── edit/
-│   │           └── page.js           # Edit product page
+│   │           └── page.js           # Edit listing page
 │   ├── sell/
-│   │   └── page.js                   # Sell product form
+│   │   └── page.js                   # Post new product listing page
 │   ├── my-listings/
-│   │   └── page.js                   # Seller dashboard & enquiry manager
+│   │   └── page.js                   # Dashboard (My Listings, Received Offers, Sent Offers)
 │   ├── favorites/
-│   │   └── page.js                   # Wishlist page
+│   │   └── page.js                   # Bookmarked / saved items page
 │   ├── layout.js                     # Root layout with Navbar, Footer & Toaster
-│   ├── page.js                       # Landing page
-│   └── globals.css                   # Custom theme & utility CSS
+│   ├── page.js                       # Home landing page
+│   └── globals.css                   # Custom theme & styling
 ├── components/
-│   ├── Navbar.jsx                    # Header with profile switcher & mobile menu
-│   ├── Footer.jsx                    # CampusMart footer
-│   ├── ProductCard.jsx               # Reusable product card
-│   ├── ProductGrid.jsx               # Grid container & empty states
-│   ├── ProductForm.jsx               # Reusable create / edit listing form
-│   ├── SearchBar.jsx                 # Search input with clear button
-│   ├── CategoryFilter.jsx            # Category, condition & price sidebar
+│   ├── Navbar.jsx                    # Navigation header with demo profile switcher
+│   ├── Footer.jsx                    # Footer component
+│   ├── ProductCard.jsx               # Reusable product card with favorite button
+│   ├── ProductGrid.jsx               # Responsive product grid & empty state
+│   ├── ProductForm.jsx               # Reusable create/edit form with file upload
+│   ├── SearchBar.jsx                 # Live search input bar
+│   ├── CategoryFilter.jsx            # Sidebar & mobile filters (Category, Condition, Price)
 │   ├── EnquiryModal.jsx              # Buyer enquiry and counter-offer modal
-│   └── LoadingSkeleton.jsx           # Animated loading placeholders
+│   └── LoadingSkeleton.jsx           # Loading skeletons for products and details
 ├── models/
 │   ├── Product.js                    # Mongoose product schema
-│   ├── Favorite.js                   # Mongoose favorite schema
-│   └── Enquiry.js                    # Mongoose enquiry schema
+│   ├── Favorite.js                   # Mongoose favorite/wishlist schema
+│   └── Enquiry.js                    # Mongoose enquiry & offer schema
 ├── lib/
 │   ├── mongodb.js                    # Cached MongoDB connection helper
-│   ├── utils.js                      # Currency formatting & date helpers
+│   ├── utils.js                      # Price formatting & date helpers
 │   └── validations.js                # Form validation functions
 ├── scripts/
 │   └── seed.js                       # Sample seed data with campus items
@@ -150,7 +68,30 @@ campusmart/
 
 ---
 
-## ⚡ Quick Start & Installation
+## 🚀 Features
+
+- **Product Listings**: Create, edit, and delete listings with title, description, price, condition, category, and images.
+- **Item Discovery & Search**: Live keyword search across title and description.
+- **Filters & Sorting**: Filter by Category (Books, Electronics, Furniture, Stationery, Other), Condition (New, Like New, Good, Fair), and Price Range (₹ Min - Max). Sort by Newest or Price.
+- **Product Details & Similar Items**: Detailed view with multiple photos, discount calculation, and category recommendations.
+- **Seller Profiles & Direct Filter**: View seller contact info and click *"Browse other items by this seller"* to view all products listed by that student.
+- **Enquiries & Price Offers**: Buyers can contact sellers and make counter-offers. Sellers can **Accept** or **Reject** offers.
+- **Buyer Sent Offers Tab**: Students can track the status of all offers they sent to other sellers directly from the dashboard.
+- **Favorites / Wishlist**: Save items to review later with status indicators (Available, Sold, Reserved).
+- **Student Dashboard (`/my-listings`)**: 3 tabs to manage active listings (mark Available/Reserved/Sold), review received offers, and track sent offers.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend**: Next.js 14 (App Router), React 18, Tailwind CSS, Lucide React icons
+- **Backend**: Next.js API Route Handlers
+- **Database**: MongoDB with Mongoose
+- **Notifications**: React Hot Toast
+
+---
+
+## ⚡ Getting Started
 
 ### 1. Clone the repository
 ```bash
@@ -163,21 +104,20 @@ cd Students_Secondhand_Marketplace
 npm install
 ```
 
-### 3. Setup Environment Variables
-Create a `.env.local` file in the root directory:
+### 3. Setup environment variables
+Create a `.env.local` file in the root folder:
 ```env
-MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/campusmart?retryWrites=true&w=majority
+MONGODB_URI=mongodb://127.0.0.1:27017/campusmart
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
-*(You can also use a local MongoDB instance: `mongodb://127.0.0.1:27017/campusmart`)*
+*(Or use your MongoDB Atlas connection string)*
 
-### 4. Seed Sample Student Data
-Populate the database with sample textbooks, calculators, furniture, and bicycles:
+### 4. (Optional) Seed sample data
 ```bash
 npm run seed
 ```
 
-### 5. Run the Development Server
+### 5. Run development server
 ```bash
 npm run dev
 ```
@@ -185,24 +125,9 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 🧪 Testing Checklist
+## 👤 Demo Student Profiles
 
-- [x] **Landing Page**: Verified Hero, categories, featured and recent product sections.
-- [x] **Search & Multi-Filtering**: Tested category, condition, min/max price filters and search keyword queries.
-- [x] **Product Creation**: Tested form validation, photo preview, and MongoDB insertion via `/sell`.
-- [x] **Product Details**: Tested gallery selection, seller info display, and similar products.
-- [x] **Edit & Delete**: Verified updates and cascade deletions from My Listings.
-- [x] **Favorites**: Verified saving, removing, and database persistence across browser refreshes.
-- [x] **Buyer Enquiries**: Tested offer submission and seller accept/decline buttons.
-- [x] **Responsive UI**: Tested across mobile, tablet, and desktop breakpoints.
-
----
-
-## 🌐 Deploy to Vercel
-
-1. Push this repository to GitHub.
-2. Sign in to [Vercel](https://vercel.com) and click **"New Project"**.
-3. Import `Students_Secondhand_Marketplace`.
-4. In Environment Variables, add:
-   - `MONGODB_URI`: Your MongoDB Atlas connection string.
-5. Click **Deploy**. Vercel will build and launch the site automatically.
+Use the profile switcher in the navigation bar to test buyer and seller workflows:
+- `rani.patel@campus.edu` (Rani Patel)
+- `arjun.sharma@campus.edu` (Arjun Sharma)
+- `sneha.verma@campus.edu` (Sneha Verma)
