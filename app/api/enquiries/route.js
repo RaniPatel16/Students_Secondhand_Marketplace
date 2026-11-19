@@ -3,12 +3,13 @@ import connectToDatabase from "../../../lib/mongodb";
 import Enquiry from "../../../models/Enquiry";
 import Product from "../../../models/Product";
 
-// GET /api/enquiries - Fetch enquiries for a seller or specific product
+// GET /api/enquiries - Fetch enquiries for a seller, buyer, or specific product
 export async function GET(request) {
   try {
     await connectToDatabase();
     const { searchParams } = new URL(request.url);
     const sellerEmail = searchParams.get("sellerEmail");
+    const buyerEmail = searchParams.get("buyerEmail");
     const productId = searchParams.get("productId");
 
     let query = {};
@@ -20,10 +21,13 @@ export async function GET(request) {
       const sellerProducts = await Product.find({ sellerEmail: sellerEmail.toLowerCase() }, "_id");
       const productIds = sellerProducts.map((p) => p._id);
       query.productId = { $in: productIds };
+    } else if (buyerEmail) {
+      // Find all enquiries sent by this student as a buyer
+      query.buyerEmail = buyerEmail.toLowerCase();
     }
 
     const enquiries = await Enquiry.find(query)
-      .populate("productId", "name price images category status")
+      .populate("productId", "name price images category status sellerName sellerEmail sellerPhone location")
       .sort({ createdAt: -1 })
       .lean();
 

@@ -49,6 +49,7 @@ Designed according to modern marketplace guidelines with a refined Oxford Green 
 - Direct **"Contact Seller / Make Counter Offer"** modal.
 - Persistent **"Add to Favorites"** toggle button.
 - Related products in the same category.
+- **"Browse other items by this seller"** button: One-click filter to view all products listed by the student seller.
 
 ### 4. ➕ Sell Item Form (`/sell`)
 - Comprehensive item creation form with client and server-side validation.
@@ -56,13 +57,10 @@ Designed according to modern marketplace guidelines with a refined Oxford Green 
 - Support for image upload from local device (base64) or direct image URL.
 - Live photo preview and image deletion prior to posting.
 
-### 5. 📦 Seller Center Dashboard (`/my-listings`)
-- View all products listed under the current student profile.
-- **Product Status Management**: Instant update between `Available`, `Reserved`, and `Sold`.
-- **Visibility Toggle**: Hide/show listings without deleting them.
-- **Edit Listing**: Edit price, description, images, and details (`/marketplace/[id]/edit`).
-- **Delete Listing**: Cascade delete removing product, associated enquiries, and favorites.
-- **Buyer Offers & Enquiries Inbox**: View buyer messages and counter-offers; accept or decline offers in real-time.
+### 5. 📦 Student Dashboard & Offers Manager (`/my-listings`)
+- **My Listings Tab**: View all products listed under the current student profile; update status (`Available`, `Reserved`, `Sold`); toggle active visibility; edit or delete listings.
+- **Received Offers Tab**: View buyer messages and proposed counter-offers; accept or decline offers in real-time.
+- **My Sent Offers (as Buyer) Tab**: Track all enquiries and counter-offers you sent to other sellers; check real-time status (`Pending`, `Accepted`, `Rejected`); access direct seller contact details upon acceptance; withdraw/cancel offers.
 
 ### 6. ❤️ Saved Items Wishlist (`/favorites`)
 - Persistent MongoDB-backed wishlist tied to student profile.

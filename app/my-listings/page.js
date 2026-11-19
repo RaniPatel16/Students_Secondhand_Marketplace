@@ -19,16 +19,22 @@ import {
   MessageSquare,
   Mail,
   DollarSign,
+  Send,
+  Phone,
+  ShoppingBag,
+  ArrowRight,
 } from "lucide-react";
 import { formatPrice, formatDate } from "../../lib/utils";
 import toast from "react-hot-toast";
 
 export default function MyListingsPage() {
-  const [activeTab, setActiveTab] = useState("listings"); // 'listings' | 'enquiries'
+  const [activeTab, setActiveTab] = useState("listings"); // 'listings' | 'enquiries' | 'sentOffers'
   const [products, setProducts] = useState([]);
   const [enquiries, setEnquiries] = useState([]);
+  const [sentOffers, setSentOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [enquiriesLoading, setEnquiriesLoading] = useState(false);
+  const [sentOffersLoading, setSentOffersLoading] = useState(false);
   const [currentEmail, setCurrentEmail] = useState("rani.patel@campus.edu");
   const [actionLoading, setActionLoading] = useState(null);
 
@@ -64,17 +70,35 @@ export default function MyListingsPage() {
     }
   };
 
+  // Fetch enquiries/offers sent by this student as a buyer
+  const loadSentOffers = async (email) => {
+    setSentOffersLoading(true);
+    try {
+      const res = await fetch(`/api/enquiries?buyerEmail=${encodeURIComponent(email)}`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.enquiries)) {
+        setSentOffers(data.enquiries);
+      }
+    } catch (err) {
+      toast.error("Failed to load sent offers");
+    } finally {
+      setSentOffersLoading(false);
+    }
+  };
+
   useEffect(() => {
     const saved = localStorage.getItem("campusmart_user_email") || "rani.patel@campus.edu";
     setCurrentEmail(saved);
     loadMyProducts(saved);
     loadMyEnquiries(saved);
+    loadSentOffers(saved);
 
     const handleUserChanged = () => {
       const updated = localStorage.getItem("campusmart_user_email") || "rani.patel@campus.edu";
       setCurrentEmail(updated);
       loadMyProducts(updated);
       loadMyEnquiries(updated);
+      loadSentOffers(updated);
     };
 
     window.addEventListener("campusmart_user_changed", handleUserChanged);
@@ -174,9 +198,29 @@ export default function MyListingsPage() {
     }
   };
 
+  // Delete / withdraw a sent offer as buyer
+  const handleDeleteSentOffer = async (enquiryId) => {
+    if (!confirm("Are you sure you want to withdraw this offer?")) return;
+    try {
+      const res = await fetch(`/api/enquiries/${enquiryId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSentOffers((prev) => prev.filter((item) => item._id !== enquiryId));
+        toast.success("Offer withdrawn");
+      } else {
+        toast.error("Failed to withdraw offer");
+      }
+    } catch (err) {
+      toast.error("Error withdrawing offer");
+    }
+  };
+
   const totalListings = products.length;
   const activeListings = products.filter((p) => p.isActive && p.status === "Available").length;
   const pendingEnquiries = enquiries.filter((e) => e.status === "Pending").length;
+  const acceptedSentOffers = sentOffers.filter((e) => e.status === "Accepted").length;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
@@ -185,11 +229,11 @@ export default function MyListingsPage() {
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-primary/10 text-brand-primary text-xs font-semibold mb-2">
             <Package className="w-3.5 h-3.5 text-brand-accent" />
-            <span>Seller Dashboard</span>
+            <span>Dashboard & Enquiries</span>
           </div>
-          <h1 className="text-3xl font-extrabold text-brand-primary">Seller Center</h1>
+          <h1 className="text-3xl font-extrabold text-brand-primary">Student Dashboard</h1>
           <p className="text-xs sm:text-sm text-brand-textMuted mt-1">
-            Manage your ads, respond to student enquiries, and update item status.
+            Manage your ads, respond to incoming buyer enquiries, and track offers you sent to sellers.
           </p>
         </div>
 
@@ -203,10 +247,10 @@ export default function MyListingsPage() {
       </div>
 
       {/* Tabs Selector */}
-      <div className="flex items-center gap-3 border-b border-brand-border">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3 border-b border-brand-border">
         <button
           onClick={() => setActiveTab("listings")}
-          className={`flex items-center gap-2 px-5 py-3 text-sm font-bold border-b-2 transition-all ${
+          className={`flex items-center gap-2 px-4 sm:px-5 py-3 text-xs sm:text-sm font-bold border-b-2 transition-all ${
             activeTab === "listings"
               ? "border-brand-primary text-brand-primary"
               : "border-transparent text-brand-textMuted hover:text-brand-primary"
@@ -218,17 +262,34 @@ export default function MyListingsPage() {
 
         <button
           onClick={() => setActiveTab("enquiries")}
-          className={`flex items-center gap-2 px-5 py-3 text-sm font-bold border-b-2 transition-all relative ${
+          className={`flex items-center gap-2 px-4 sm:px-5 py-3 text-xs sm:text-sm font-bold border-b-2 transition-all relative ${
             activeTab === "enquiries"
               ? "border-brand-primary text-brand-primary"
               : "border-transparent text-brand-textMuted hover:text-brand-primary"
           }`}
         >
           <MessageSquare className="w-4 h-4 text-brand-accent" />
-          <span>Buyer Offers & Enquiries</span>
+          <span>Received Offers ({enquiries.length})</span>
           {pendingEnquiries > 0 && (
             <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-accent text-white">
               {pendingEnquiries}
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab("sentOffers")}
+          className={`flex items-center gap-2 px-4 sm:px-5 py-3 text-xs sm:text-sm font-bold border-b-2 transition-all relative ${
+            activeTab === "sentOffers"
+              ? "border-brand-primary text-brand-primary"
+              : "border-transparent text-brand-textMuted hover:text-brand-primary"
+          }`}
+        >
+          <Send className="w-4 h-4 text-brand-accent" />
+          <span>My Sent Offers ({sentOffers.length})</span>
+          {acceptedSentOffers > 0 && (
+            <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-600 text-white">
+              {acceptedSentOffers} Accepted!
             </span>
           )}
         </button>
@@ -524,6 +585,168 @@ export default function MyListingsPage() {
                           Reset to Pending
                         </button>
                       )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 3: SENT OFFERS AS BUYER VIEW */}
+      {activeTab === "sentOffers" && (
+        <div className="space-y-4">
+          <div className="p-4 rounded-2xl bg-brand-surface border border-brand-border text-xs text-brand-textMuted flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <span>Tracking offers sent from your student profile: <strong>{currentEmail}</strong></span>
+            <span className="font-semibold text-brand-primary">Total Sent: {sentOffers.length}</span>
+          </div>
+
+          {sentOffersLoading ? (
+            <div className="space-y-4 animate-pulse">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-28 bg-brand-surface rounded-2xl border border-brand-border" />
+              ))}
+            </div>
+          ) : sentOffers.length === 0 ? (
+            <div className="bg-brand-surface rounded-3xl border border-brand-border p-12 text-center max-w-lg mx-auto space-y-4 shadow-sm">
+              <div className="w-16 h-16 rounded-2xl bg-brand-primary/10 text-brand-primary flex items-center justify-center mx-auto">
+                <Send className="w-8 h-8 text-brand-accent" />
+              </div>
+              <h2 className="text-xl font-bold text-brand-primary">No sent offers yet</h2>
+              <p className="text-xs sm:text-sm text-brand-textMuted leading-relaxed">
+                When you find campus products you like and send enquiries or propose counter-offers, their status will appear here.
+              </p>
+              <div className="pt-2">
+                <Link
+                  href="/marketplace"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-brand-primary text-white text-xs font-semibold hover:bg-brand-primaryHover transition-all shadow-sm"
+                >
+                  <ShoppingBag className="w-4 h-4 text-brand-accent" />
+                  <span>Browse Marketplace Items</span>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {sentOffers.map((item) => {
+                const product = item.productId;
+                const isAccepted = item.status === "Accepted";
+                const isRejected = item.status === "Rejected";
+                const isPending = item.status === "Pending";
+
+                return (
+                  <div
+                    key={item._id}
+                    className={`p-5 rounded-2xl bg-brand-surface border transition-all shadow-sm space-y-4 ${
+                      isAccepted
+                        ? "border-emerald-300 ring-1 ring-emerald-200"
+                        : "border-brand-border"
+                    }`}
+                  >
+                    {/* Top Status Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-brand-border">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${
+                            isAccepted
+                              ? "bg-emerald-100 text-emerald-800"
+                              : isRejected
+                              ? "bg-red-100 text-red-800"
+                              : "bg-amber-100 text-amber-800"
+                          }`}
+                        >
+                          {isAccepted && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />}
+                          {isRejected && <XCircle className="w-3.5 h-3.5 text-red-700" />}
+                          {isPending && <Clock className="w-3.5 h-3.5 text-amber-700" />}
+                          <span>{item.status}</span>
+                        </span>
+                        <span className="text-[11px] text-brand-textMuted">Sent on {formatDate(item.createdAt)}</span>
+                      </div>
+
+                      <button
+                        onClick={() => handleDeleteSentOffer(item._id)}
+                        className="self-end sm:self-center text-xs text-red-600 hover:text-red-800 flex items-center gap-1 hover:underline"
+                        title="Withdraw this enquiry"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Withdraw Offer</span>
+                      </button>
+                    </div>
+
+                    {/* Accepted Callout Banner */}
+                    {isAccepted && (
+                      <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 space-y-1">
+                        <div className="font-bold flex items-center gap-1.5 text-emerald-800">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          <span>Congratulations! The seller accepted your offer.</span>
+                        </div>
+                        <p className="text-[11px] text-emerald-700">
+                          Reach out to <strong>{product?.sellerName || "the seller"}</strong> directly to coordinate the campus handover:
+                        </p>
+                        <div className="flex flex-wrap gap-4 pt-1 font-semibold text-[11px]">
+                          {product?.sellerPhone && (
+                            <a href={`tel:${product.sellerPhone}`} className="flex items-center gap-1 text-emerald-800 underline">
+                              <Phone className="w-3 h-3" />
+                              <span>{product.sellerPhone}</span>
+                            </a>
+                          )}
+                          {product?.sellerEmail && (
+                            <a href={`mailto:${product.sellerEmail}`} className="flex items-center gap-1 text-emerald-800 underline">
+                              <Mail className="w-3 h-3" />
+                              <span>{product.sellerEmail}</span>
+                            </a>
+                          )}
+                          {product?.location && (
+                            <span className="text-emerald-800">📍 {product.location}</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Product & Proposed Price */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-brand-canvas p-3.5 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        {product?.images?.[0] && (
+                          <div className="w-12 h-12 rounded-lg overflow-hidden bg-brand-surface shrink-0 border border-brand-border">
+                            <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <div>
+                          <div className="text-[10px] text-brand-textMuted uppercase font-semibold">Target Product</div>
+                          {product ? (
+                            <Link href={`/marketplace/${product._id}`} className="font-bold text-sm text-brand-primary hover:underline line-clamp-1">
+                              {product.name}
+                            </Link>
+                          ) : (
+                            <span className="text-sm font-semibold text-brand-textMuted italic">[Listing Removed]</span>
+                          )}
+                          <div className="text-[11px] text-brand-textMuted">
+                            Seller: <strong>{product?.sellerName || "Campus Student"}</strong>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4 text-xs shrink-0">
+                        {product?.price !== undefined && (
+                          <div>
+                            <span className="text-brand-textMuted block text-[10px]">Listed Price</span>
+                            <span className="font-bold text-brand-textMain">{formatPrice(product.price)}</span>
+                          </div>
+                        )}
+                        {item.offerPrice && (
+                          <div className="border-l border-brand-border pl-4">
+                            <span className="text-brand-accent block text-[10px] font-bold">Your Offer</span>
+                            <span className="font-black text-brand-primary text-base">{formatPrice(item.offerPrice)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Buyer Message */}
+                    <div className="text-xs text-brand-textMain bg-brand-surface p-2.5 rounded-xl border border-brand-border">
+                      <span className="font-semibold text-brand-primary block mb-0.5">Your Sent Message:</span>
+                      <p className="whitespace-pre-line text-brand-textMain/90">{item.message}</p>
                     </div>
                   </div>
                 );
